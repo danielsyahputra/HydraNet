@@ -30,7 +30,7 @@ class HydraNet(nn.Module):
         )
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x) -> Tuple:
+    def forward(self, x):
         age_output = self.backbone.age_head(self.backbone(x))
         gender_output = self.sigmoid(self.backbone.gender_head(self.backbone(x)))
         race_output = self.backbone.race_head(self.backbone(x))
