@@ -1,2 +1,2 @@
-# HydraNets
-A Simple Multi-Task Learning with HydraNets
+# HydraNet
+HydraNet Using Uncertainty to Weigh Losses for Face Attribute Recognition
