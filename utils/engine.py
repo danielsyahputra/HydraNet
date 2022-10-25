@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 import numpy as np
 from timeit import default_timer as timer 
-from .metrics import MTLMetrics
+from metrics.metrics import MTLMetrics
 from typing import Dict, Tuple
 from tqdm.auto import tqdm
 
