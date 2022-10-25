@@ -3,6 +3,7 @@ import torch
 import torchvision
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import random_split
 from typing import Tuple
 from PIL import Image
 
@@ -41,18 +42,21 @@ class MTLDataset(Dataset):
     def __len__(self) -> int: 
         return len(self.paths)
 
-def dataloader(train_data_dir: str,
-            test_data_dir: str = None,
+def dataloader(data_dir: str,
             batch_size: int = 32,
             test_batch_size: int = 16,
+            test_size: float = 0.2,
             shuffle: bool = True,
             num_workers: int = 2) -> Tuple[DataLoader, DataLoader]:
-    train_dataset = MTLDataset(root=train_data_dir, transform=tensor_transforms())
+    
+    dataset = MTLDataset(root=data_dir, transform=tensor_transforms())
+    test_size = int(len(dataset) * test_size)
+    train_size = len(dataset) - test_size
+    train_dataset, test_dataset = random_split(
+        dataset,
+        [train_size, test_size],
+        generator=torch.Generator().manual_seed(42)
+    )
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
-
-    if test_data_dir is not None:
-        val_dataset = MTLDataset(root=test_data_dir, transform=tensor_transforms())
-        val_loader = DataLoader(val_dataset, batch_size=test_batch_size, shuffle=shuffle, num_workers=num_workers)
-        return train_loader, val_loader
-        
-    return train_loader
+    test_loader = DataLoader(test_dataset, batch_size=test_batch_size, shuffle=shuffle, num_workers=num_workers)
+    return train_loader, test_loader
