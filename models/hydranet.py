@@ -7,7 +7,7 @@ from typing import Tuple
 class HydraNet(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.backbone = models.resnet18(weights='DEFAULT')
+        self.backbone = models.resnet50(weights='IMAGENET1K_V2')
         self.in_features = self.backbone.fc.in_features
         self.backbone.fc = nn.Identity()
         self.backbone.age_head = nn.Sequential(
