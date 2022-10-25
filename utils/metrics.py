@@ -2,16 +2,36 @@ from typing import List, Tuple
 import sklearn.metrics as metrics
 
 class MTLMetrics():
-    def __init__(self, targets: Tuple[List, List, List], 
-                outputs: Tuple[List, List, List]) -> None:
-        self.age_targets, self.gender_targets, self.race_targets = targets
-        self.age_outputs, self.gender_outputs, self.race_outputs = outputs
+    def __init__(self) -> None:
+        self.age_targets, self.gender_targets, self.race_targets = [],[],[]
+        self.age_outputs, self.gender_outputs, self.race_outputs = [],[],[]
     
-    def evalute_model(self, regression_metric: str, classification_metric: str):
+    def insert(self, values, task: str, mode: str = "target") -> None:
+        if mode == "target":
+            if task == "age":
+                self.age_targets.extend(values)
+            elif task == "gender":
+                self.gender_targets.extend(values)
+            else:
+                self.race_targets.extend(values)
+        else:
+            if task == "age":
+                self.age_outputs.extend(values)
+            elif task == "gender":
+                self.gender_outputs.extend(values)
+            else:
+                self.race_outputs.extend(values)
+
+    def evalute_model(self, regression_metric: str, classification_metric: str, step='train'):
         age_metric = self._evaluate_regression(metric=regression_metric)
         gender_metric = self._evaluate_classification(task='gender', metric=classification_metric)
         race_metric = self._evaluate_classification(task='race', metric=classification_metric)
-        return age_metric, gender_metric, race_metric
+        metrics = {
+            f"{step}_age_metric": age_metric,
+            f"{step}_gender_metric": gender_metric,
+            f"{step}_race_metric": race_metric
+        }
+        return metrics
 
     def _evaluate_regression(self, metric: str = "mae"):
         if metric == "mae":
