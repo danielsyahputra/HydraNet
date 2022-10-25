@@ -18,7 +18,7 @@ def train_one_epoch(model,
                     optimizer,
                     loss_fns: dict,
                     regression_metric:str = "mae",
-                    classification_metric: str = "f1",) -> Tuple:
+                    classification_metric: str = "f1",) -> Dict:
     model.train()
     device = next(model.parameters()).device
     batch_losses = []
@@ -75,7 +75,7 @@ def eval_one_epoch(model,
                     loss_fns: dict, 
                     regression_metric:str = "mae",
                     classification_metric: str = "f1",
-                    step: str = "val"):
+                    step: str = "val") -> Dict:
     model.eval()
     device = next(model.parameters()).device
     batch_losses = []
@@ -186,7 +186,6 @@ def train_model(model,
             
             torch.save(model.state_dict(), f"{model_dir}/weight_epoch_{epoch}.pt")
         end_time = timer()
-        eval_one_epoch()
         mp.log_model(model, model_name)
         mlflow.log_metrics({"time": end_time - start_time})
         del model
