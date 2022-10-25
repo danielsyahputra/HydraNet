@@ -2,21 +2,21 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
-# class MTLLoss(nn.Module):
-#     def __init__(self, model, num_tasks: int = 3, loss_type: str = "fixed") -> None:
-#         super().__init__()
-#         self.model = model
-#         self.num_tasks = num_tasks
-#         self.log_vars = nn.Parameter(torch.zeros((num_tasks)))
+class MTLLoss(nn.Module):
+    def __init__(self, model, num_tasks: int = 3, loss_type: str = "fixed") -> None:
+        super().__init__()
+        self.model = model
+        self.num_tasks = num_tasks
+        self.log_vars = nn.Parameter(torch.zeros((num_tasks)))
 
-#     def forward(self, targets: Tensor, imgs: Tensor):
-#         outputs = self.model(imgs)
-#         loss = 0
-#         for i in range(self.num_tasks):
-#             precision = torch.exp(-self.log_vars[i])
-#             loss += torch.sum(precision * (targets[i] - outputs[i]) ** 2 + self.log_vars[i], -1)
-#         loss = torch.mean(loss)
-#         return loss, self.log_vars.data.tolist()
+    def forward(self, targets: Tensor, imgs: Tensor):
+        outputs = self.model(imgs)
+        loss = 0
+        for i in range(self.num_tasks):
+            precision = torch.exp(-self.log_vars[i])
+            loss += torch.sum(precision * (targets[i] - outputs[i]) ** 2 + self.log_vars[i], -1)
+        loss = torch.mean(loss)
+        return loss, self.log_vars.data.tolist()
 
 class MultiTaskLoss(nn.Module):
     def __init__(self, loss_type, uncertainties, enabled_tasks=(True, True, True)) -> None:
@@ -57,7 +57,7 @@ class MultiTaskLoss(nn.Module):
                 loss += race_uncertainty * race_loss
         elif self.loss_type == "learned":
             if age_enabled:
-                loss += torch.exp(-age_uncertainty) * age_loss + 0.5 * age_uncertainty
+                loss += 0.5 * (torch.exp(-age_uncertainty) * age_loss +  age_uncertainty)
             if gender_enabled:
                 loss += 0.5 * (torch.exp(-gender_uncertainty) * gender_loss + gender_uncertainty)
             if race_enabled:
