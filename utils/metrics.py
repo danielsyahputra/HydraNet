@@ -1,4 +1,3 @@
-from typing import List, Tuple
 import sklearn.metrics as metrics
 
 class MTLMetrics():

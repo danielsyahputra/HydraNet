@@ -14,7 +14,7 @@ def tensor_transforms() -> torchvision.transforms.Compose:
         transforms.Normalize([0.485, 0.456, 0.406], 
         [0.229, 0.224, 0.225])
     ]
-    return custom_transforms
+    return transforms.Compose(custom_transforms)
 
 class MTLDataset(Dataset):
     def __init__(self, root: str, transform=None) -> None:
