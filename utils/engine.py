@@ -18,8 +18,7 @@ import mlflow.pytorch as mp
 def train_one_epoch(model, 
                     loader, 
                     optimizer,
-                    loss_fns: dict,
-                    loss_type: str = "learned",
+                    loss_fn,
                     regression_metric:str = "mae",
                     classification_metric: str = "f1",) -> Dict:
     model.train()
@@ -40,16 +39,14 @@ def train_one_epoch(model,
         # Batch Result
         optimizer.zero_grad()
         outputs = model(imgs)
-        loss_age = loss_fns['age'](outputs[0], age_targets.unsqueeze(1).float())
-        loss_gender = loss_fns['gender'](outputs[1], gender_targets)
-        loss_race = loss_fns['race'](outputs[2], race_targets)
-        loss = loss_age + loss_gender + loss_race
+        target_tasks = (age_targets.unsqueeze(1).float(), gender_targets, race_targets)
+        loss, (age_loss_value, gender_loss_value, race_loss_value) = loss_fn(outputs, target_tasks)
         loss.backward()
         optimizer.step()
         batch_losses.append(loss.item())
-        batch_age_losses.append(loss_age.item())
-        batch_gender_losses.append(loss_gender.item())
-        batch_race_losses.append(loss_race.item())
+        batch_age_losses.append(age_loss_value)
+        batch_gender_losses.append(gender_loss_value)
+        batch_race_losses.append(race_loss_value)
 
         mtl_metric.insert(values=age_targets.cpu().numpy(), task="age", mode='target')
         mtl_metric.insert(values=gender_targets.cpu().numpy(), task="gender", mode='target')
@@ -76,7 +73,7 @@ def train_one_epoch(model,
 @torch.no_grad()
 def eval_one_epoch(model, 
                     loader, 
-                    loss_fns: dict, 
+                    loss_fn,
                     regression_metric:str = "mae",
                     classification_metric: str = "f1",
                     step: str = "val") -> Dict:
@@ -100,16 +97,14 @@ def eval_one_epoch(model,
 
         # Outputs
         outputs = model(imgs)
-        loss_age = loss_fns['age'](outputs[0], age_targets.unsqueeze(1).float())
-        loss_gender = loss_fns['gender'](outputs[1], gender_targets)
-        loss_race = loss_fns['race'](outputs[2], race_targets)
-        loss = loss_age + loss_gender + loss_race
+        target_tasks = (age_targets.unsqueeze(1).float(), gender_targets, race_targets)
+        loss, (age_loss_value, gender_loss_value, race_loss_value) = loss_fn(outputs, target_tasks)
 
         # Task Loss
         batch_losses.append(loss.item())
-        batch_age_losses.append(loss_age.item())
-        batch_gender_losses.append(loss_gender.item())
-        batch_race_losses.append(loss_race.item())
+        batch_age_losses.append(age_loss_value)
+        batch_gender_losses.append(gender_loss_value)
+        batch_race_losses.append(race_loss_value)
 
         # Task metrics
         mtl_metric.insert(values=age_targets.cpu().numpy(), task="age", mode='target')
@@ -151,7 +146,7 @@ def get_str_log(epoch: int, metrics: Dict, regression_metric: str,
 def train_model(model,
                 loaders,
                 optimizer,
-                loss_fns,
+                loss_fn,
                 device,
                 model_dir: str,
                 model_name: str = "Model",
@@ -172,10 +167,10 @@ def train_model(model,
         start_time = timer()
         for epoch in tqdm(range(1, epochs + 1)):
             train_metrics = train_one_epoch(model=model, loader=loaders['train'], 
-                                    optimizer=optimizer, loss_fns=loss_fns,
+                                    optimizer=optimizer, loss_fn==loss_fn,
                                     regression_metric=regression_metric, classification_metric=classification_metric)
             val_metrics = eval_one_epoch(model=model, loader=loaders['val'], 
-                                        loss_fns=loss_fns, step='val',
+                                        loss_fn=loss_fn, step='val',
                                         regression_metric=regression_metric, classification_metric=classification_metric)
             mlflow.log_metrics(metrics=train_metrics, step=epoch)
             mlflow.log_metrics(metrics=val_metrics, step=epoch)
