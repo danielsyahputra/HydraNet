@@ -7,6 +7,7 @@ import numpy as np
 from timeit import default_timer as timer 
 from metrics.metrics import MTLMetrics
 from utils.normalize import Transform
+from losses.uncertainty_loss import MultiTaskLoss
 from typing import Dict, Tuple
 from tqdm.auto import tqdm
 
@@ -18,6 +19,7 @@ def train_one_epoch(model,
                     loader, 
                     optimizer,
                     loss_fns: dict,
+                    loss_type: str = "learned",
                     regression_metric:str = "mae",
                     classification_metric: str = "f1",) -> Dict:
     model.train()
@@ -39,7 +41,7 @@ def train_one_epoch(model,
         optimizer.zero_grad()
         outputs = model(imgs)
         loss_age = loss_fns['age'](outputs[0], age_targets.unsqueeze(1).float())
-        loss_gender = loss_fns['gender'](outputs[1], gender_targets.unsqueeze(1).float())
+        loss_gender = loss_fns['gender'](outputs[1], gender_targets)
         loss_race = loss_fns['race'](outputs[2], race_targets)
         loss = loss_age + loss_gender + loss_race
         loss.backward()
@@ -53,7 +55,7 @@ def train_one_epoch(model,
         mtl_metric.insert(values=gender_targets.cpu().numpy(), task="gender", mode='target')
         mtl_metric.insert(values=race_targets.cpu().numpy(), task="race", mode='target')
         mtl_metric.insert(values=outputs[0].squeeze(1).detach().cpu().numpy(), task="age", mode='output')
-        mtl_metric.insert(values=(outputs[1].squeeze(1) > 0.5).detach().cpu().int().numpy(), task="gender", mode='output')
+        mtl_metric.insert(values=torch.argmax(softmax(outputs[1]), dim=1).cpu().numpy(), task="gender", mode='output')
         mtl_metric.insert(values=torch.argmax(softmax(outputs[2]), dim=1).cpu().numpy(), task="race", mode='output')
     
     total_loss_value = np.mean(batch_losses)
@@ -99,7 +101,7 @@ def eval_one_epoch(model,
         # Outputs
         outputs = model(imgs)
         loss_age = loss_fns['age'](outputs[0], age_targets.unsqueeze(1).float())
-        loss_gender = loss_fns['gender'](outputs[1], gender_targets.unsqueeze(1).float())
+        loss_gender = loss_fns['gender'](outputs[1], gender_targets)
         loss_race = loss_fns['race'](outputs[2], race_targets)
         loss = loss_age + loss_gender + loss_race
 
@@ -114,7 +116,7 @@ def eval_one_epoch(model,
         mtl_metric.insert(values=gender_targets.cpu().numpy(), task="gender", mode='target')
         mtl_metric.insert(values=race_targets.cpu().numpy(), task="race", mode='target')
         mtl_metric.insert(values=outputs[0].squeeze(1).detach().cpu().numpy(), task="age", mode='output')
-        mtl_metric.insert(values=(outputs[1].squeeze(1) > 0.5).detach().cpu().int().numpy(), task="gender", mode='output')
+        mtl_metric.insert(values=torch.argmax(softmax(outputs[1]), dim=1).cpu().numpy(), task="gender", mode='output')
         mtl_metric.insert(values=torch.argmax(softmax(outputs[2]), dim=1).cpu().numpy(), task="race", mode='output')
     
     # Total loss for all dataset

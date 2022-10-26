@@ -19,6 +19,7 @@ def main(args):
     epochs = args.epochs
     experiment_name = args.experiment_name
     model_dir = args.model_dir
+    print("="*200)
     train_model(
         model=model,
         loaders={"train": train_loader, "val": val_loader},

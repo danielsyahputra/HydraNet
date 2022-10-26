@@ -20,7 +20,7 @@ class HydraNet(nn.Module):
             OrderedDict([
                 ('linear', nn.Linear(self.in_features, self.in_features)),
                 ('relu1', nn.ReLU()),
-                ('final', nn.Linear(self.in_features, 1))])
+                ('final', nn.Linear(self.in_features, 2))])
         )
         self.backbone.race_head = nn.Sequential(
             OrderedDict([
@@ -32,6 +32,6 @@ class HydraNet(nn.Module):
 
     def forward(self, x):
         age_output = self.backbone.age_head(self.backbone(x))
-        gender_output = self.sigmoid(self.backbone.gender_head(self.backbone(x)))
+        gender_output = self.backbone.gender_head(self.backbone(x))
         race_output = self.backbone.race_head(self.backbone(x))
         return age_output, gender_output, race_output
