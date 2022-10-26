@@ -13,7 +13,7 @@ def decode_enabled_task(enabled_task_code: str) -> Iterable:
     if "A" in enabled_task_code:
         enabled_task[0] = True
     if "G" in enabled_task_code:
-        enabled_task_code[1] = True
+        enabled_task[1] = True
     if "R" in enabled_task_code:
         enabled_task[2] = True
     return enabled_task
