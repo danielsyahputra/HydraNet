@@ -4,7 +4,10 @@ import torch.nn as nn
 from torch import Tensor
 
 class MultiTaskLoss(nn.Module):
-    def __init__(self, loss_type: str, task_num: int = 3, enabled_task=(True, True, True), custom_weights: Tuple = (1, 1, 1)) -> None:
+    def __init__(self, 
+                loss_type: str, task_num: int = 3, 
+                enabled_task=(True, True, True), 
+                custom_weights: Tuple = (1, 1, 1)) -> None:
         super().__init__()
         self.loss_type = loss_type
         self.task_num = task_num

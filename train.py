@@ -1,11 +1,22 @@
 import torch
 import argparse
-import torch.nn as nn
 import torch.optim as optim
+from typing import Iterable
 from data.dataset import dataloader
 from utils.engine import train_model
 from models.hydranet import HydraNet
 from losses.uncertainty_loss import MultiTaskLoss
+from metrics.metrics import MTLMetrics
+
+def decode_enabled_task(enabled_task_code: str) -> Iterable:
+    enabled_task = [False, False, False]
+    if "A" in enabled_task_code:
+        enabled_task[0] = True
+    if "G" in enabled_task_code:
+        enabled_task_code[1] = True
+    if "R" in enabled_task_code:
+        enabled_task[2] = True
+    return enabled_task
 
 def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -16,9 +27,13 @@ def main(args):
     experiment_name = args.experiment_name
     model_dir = args.model_dir
     loss_type = args.loss_type
+    enabled_task = decode_enabled_task(enabled_task_code=args.enabled_task_code)
+    regression_metric = args.regression_metric
+    classification_metric = args.classification_metric
 
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
-    loss_fn = MultiTaskLoss(loss_type=loss_type, task_num=3)
+    loss_fn = MultiTaskLoss(loss_type=loss_type, task_num=3, enabled_task=enabled_task)
+    mtl_metric = MTLMetrics(enabled_task=enabled_task, regression_metric=regression_metric, classification_metric=classification_metric)
     train_loader, val_loader = dataloader(data_dir="data/UTKFace")
     loaders = {"train": train_loader, "val": val_loader}
     print()
@@ -28,11 +43,11 @@ def main(args):
         loaders=loaders,
         optimizer=optimizer,
         loss_fn=loss_fn,
+        mtl_metric=mtl_metric,
         device=device,
         model_dir=model_dir,
         experiment_name=experiment_name,
-        model_name=f"Model_{model_dir}",
-        epochs=epochs
+        epochs=epochs,
     )
 
 if __name__=="__main__":
@@ -65,6 +80,30 @@ if __name__=="__main__":
         default="learned",
         metavar="LT",
         help="Type of Loss. Choice: [learned, fixed]. Default: learned"
+    )
+    parser.add_argument(
+        "--enabled-task-code",
+        type=str,
+        choices=["A", "G", "R", "AG", "AR", "GR", "AGR"],
+        default="AGR",
+        metavar="ET",
+        help="Task that you want to train. A: Age, G: Gender, R: Race. Example: AGR means that you want to include Age, Gender, and Race in training process."
+    )
+    parser.add_argument(
+        "--regression-metric",
+        type=str,
+        choices=["mae", "mse"],
+        default="mae",
+        metavar="RM",
+        help="Regression metric used to evaluate age regression task."
+    )
+    parser.add_argument(
+        "--classification-metric",
+        type=str,
+        choices=["f1", "acc", "recall", "precision"],
+        default="f1",
+        metavar="CM",
+        help="Classification metric used to evaluate gender / race classification task."
     )
     args = parser.parse_args()
     main(args)

@@ -1,47 +1,90 @@
+import numpy as np
 import sklearn.metrics as metrics
+from typing import Iterable, List
 
 class MTLMetrics():
-    def __init__(self) -> None:
-        self.age_targets, self.gender_targets, self.race_targets = [],[],[]
-        self.age_outputs, self.gender_outputs, self.race_outputs = [],[],[]
-    
-    def insert(self, values, task: str, mode: str = "target") -> None:
-        if mode == "target":
-            if task == "age":
-                self.age_targets.extend(values)
-            elif task == "gender":
-                self.gender_targets.extend(values)
-            else:
-                self.race_targets.extend(values)
-        else:
-            if task == "age":
-                self.age_outputs.extend(values)
-            elif task == "gender":
-                self.gender_outputs.extend(values)
-            else:
-                self.race_outputs.extend(values)
+    def __init__(self, enabled_task: List,
+                regression_metric: str = "mae", 
+                classification_metric: str = "f1") -> None:
+        self.enabled_task = enabled_task
+        self._set_initial_container()
+        self.regression_metric = regression_metric
+        self.classification_metric = classification_metric
 
-    def evalute_model(self, regression_metric: str, classification_metric: str, step='train'):
-        age_metric = self._evaluate_regression(metric=regression_metric)
-        gender_metric = self._evaluate_classification(task='gender', metric=classification_metric)
-        race_metric = self._evaluate_classification(task='race', metric=classification_metric)
-        metrics = {
-            f"{step}_age_metric": age_metric,
-            f"{step}_gender_metric": gender_metric,
-            f"{step}_race_metric": race_metric
-        }
+    def _set_initial_container(self) -> None:
+        age_enabled, gender_enabled, race_enabled = self.enabled_task
+        if age_enabled:
+            self.age_outputs, self.age_targets = [], []
+            self.age_loss = []
+        if gender_enabled:
+            self.gender_outputs, self.gender_targets = [], []
+            self.gender_loss = []
+        if race_enabled:
+            self.race_outputs, self.race_targets = [], []
+            self.race_loss = []
+        self.total_loss = []
+
+    def reset(self) -> None:
+        self._set_initial_container()
+
+    def insert(self, targets: Iterable, outputs: Iterable, losses: Iterable) -> None:
+        """
+        targets: Tuple[Age targets, Gender targets, Race targets]
+        outputs: Tuple[Age outputs, Gender outputs, Race outputs]
+        losses: Tuple[total loss, age loss, gender loss, race, loss] @ batch
+        """
+        age_enabled, gender_enabled, race_enabled = self.enabled_task
+        ages_targets, gender_targets, race_targets = targets
+        age_outputs, gender_outputs, race_outputs = outputs
+        total_loss, age_loss, gender_loss, race_loss = losses
+        if age_enabled:
+            self.age_targets.extend(ages_targets)
+            self.age_outputs.extend(age_outputs)
+            self.age_loss.append(age_loss)
+        if gender_enabled:
+            self.gender_targets.extend(gender_targets)
+            self.gender_outputs.extend(gender_outputs)
+            self.gender_loss.append(gender_loss)
+        if race_enabled:
+            self.race_targets.extend(race_targets)
+            self.race_outputs.extend(race_outputs)
+            self.race_loss.append(race_loss)
+        self.total_loss.append(total_loss)
+
+    def evalute_model(self, step='train'):
+        age_enabled, gender_enabled, race_enabled = self.enabled_task
+        metrics = {f"{step}_total_loss": np.mean(self.total_loss)}
+        if age_enabled:
+            age_metric = self._evaluate_regression()
+            metrics.update({
+                f"{step}_age_{self.regression_metric}": age_metric,
+                f"{step}_age_loss": np.mean(self.age_loss)
+            })
+        if gender_enabled:
+            gender_metric = self._evaluate_classification(task="gender")
+            metrics.update({
+                f"{step}_gender_{self.classification_metric}": gender_metric,
+                f"{step}_gender_loss": np.mean(self.gender_loss)
+            })
+        if race_enabled:
+            race_metric = self._evaluate_classification(task="race")
+            metrics.update({
+                f"{step}_race_{self.classification_metric}": race_metric,
+                f"{step}_race_loss": np.mean(self.race_loss)
+            })
         return metrics
 
-    def _evaluate_regression(self, metric: str = "mae"):
-        if metric == "mae":
+    def _evaluate_regression(self):
+        if self.regression_metric == "mae":
             metric_value = self._mae()
-        elif metric == "mse":
+        elif self.regression_metric == "mse":
             metric_value = self._mse()
         else:
-            pass
+            raise ValueError
         return metric_value
 
-    def _evaluate_classification(self, task: str, metric: str = "f1"):
+    def _evaluate_classification(self, task: str):
+        metric = self.classification_metric
         if metric == "f1":
             metric_value = self._f1(task=task)
         elif metric == 'recall':
@@ -51,7 +94,7 @@ class MTLMetrics():
         elif metric == "acc":
             metric_value = self._acc(task=task)
         else:
-            pass
+            raise ValueError
         return metric_value
 
     def _mse(self):
