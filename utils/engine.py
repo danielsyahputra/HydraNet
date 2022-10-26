@@ -7,8 +7,7 @@ import numpy as np
 from timeit import default_timer as timer 
 from metrics.metrics import MTLMetrics
 from utils.normalize import Transform
-from losses.uncertainty_loss import MultiTaskLoss
-from typing import Dict, Tuple
+from typing import Dict
 from tqdm.auto import tqdm
 
 # MLFlow
@@ -167,7 +166,7 @@ def train_model(model,
         start_time = timer()
         for epoch in tqdm(range(1, epochs + 1)):
             train_metrics = train_one_epoch(model=model, loader=loaders['train'], 
-                                    optimizer=optimizer, loss_fn==loss_fn,
+                                    optimizer=optimizer, loss_fn=loss_fn,
                                     regression_metric=regression_metric, classification_metric=classification_metric)
             val_metrics = eval_one_epoch(model=model, loader=loaders['val'], 
                                         loss_fn=loss_fn, step='val',
