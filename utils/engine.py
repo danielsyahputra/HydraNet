@@ -6,6 +6,7 @@ import torch.nn as nn
 import numpy as np
 from timeit import default_timer as timer 
 from metrics.metrics import MTLMetrics
+from utils.normalize import Transform
 from typing import Dict, Tuple
 from tqdm.auto import tqdm
 
@@ -27,9 +28,10 @@ def train_one_epoch(model,
     batch_race_losses = []
     softmax = nn.Softmax(dim=1)
     mtl_metric = MTLMetrics()
+    transform = Transform()
     for imgs, targets in loader:
         imgs = imgs.to(device)
-        age_targets = targets['age'].to(device)
+        age_targets = transform.get_normalize(targets['age']).to(device)
         gender_targets = targets['gender'].to(device)
         race_targets = targets['race'].to(device)
 
@@ -80,6 +82,7 @@ def eval_one_epoch(model,
     device = next(model.parameters()).device
     batch_losses = []
     mtl_metric = MTLMetrics()
+    transform = Transform()
 
     batch_losses = []
     batch_age_losses = []
@@ -89,7 +92,7 @@ def eval_one_epoch(model,
     
     for imgs, targets in loader:
         imgs = imgs.to(device)
-        age_targets = targets['age'].to(device)
+        age_targets = transform.get_normalize(targets['age']).to(device)
         gender_targets = targets['gender'].to(device)
         race_targets = targets['race'].to(device)
 
