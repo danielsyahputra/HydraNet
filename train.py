@@ -49,7 +49,7 @@ if __name__=="__main__":
     )
     parser.add_argument(
         "--model-dir",
-        type="str",
+        type=str,
         default="exp1",
         metavar="MD",
         help="Name of directory for saving the model and artifacts."
