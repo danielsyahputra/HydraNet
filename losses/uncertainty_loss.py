@@ -25,7 +25,7 @@ class MultiTaskLoss(nn.Module):
 
     def _calculate_total_loss(self, *losses):
         age_loss, gender_loss, race_loss = losses
-        age_enabled, gender_enabled, race_enabled = self.enabled_tasks
+        age_enabled, gender_enabled, race_enabled = self.enabled_task
         age_weight_loss, gender_weight_loss, race_weight_loss = self.custom_weights
         age_log_vars, gender_log_vars, race_log_vars = self.log_vars
         loss = 0

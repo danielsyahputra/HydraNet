@@ -22,7 +22,7 @@ def main(args):
     train_loader, val_loader = dataloader(data_dir="data/UTKFace")
     loaders = {"train": train_loader, "val": val_loader}
     print()
-    print("="*200)
+    print("="*50)
     train_model(
         model=model,
         loaders=loaders,
