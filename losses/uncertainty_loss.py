@@ -38,7 +38,7 @@ class MultiTaskLoss(nn.Module):
             if gender_enabled:
                 loss += gender_weight_loss * gender_loss
             if race_enabled:
-                loss += race_loss * race_loss
+                loss += race_weight_loss * race_loss
         elif self.loss_type == "learned":
             if age_enabled:
                 precision = torch.exp(age_log_vars)
