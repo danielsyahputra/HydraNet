@@ -48,6 +48,7 @@ class MultiTaskLoss(nn.Module):
                 loss += precision * race_loss + race_log_vars
         else:
             raise ValueError
+        return loss
 
     def forward(self, outputs, targets):
         age_outputs, gender_outputs, race_outputs = outputs
