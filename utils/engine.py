@@ -107,6 +107,7 @@ def train_model(model,
                 mtl_metric,
                 device,
                 model_dir: str,
+                params: Dict,
                 model_name: str = "Model",
                 experiment_name: str = 'Experiment 1',
                 epochs: int = 10,
@@ -149,6 +150,7 @@ def train_model(model,
                 os.makedirs(f"output/{model_dir}", exist_ok=False)
             
         end_time = timer()
+        mlflow.log_params(params=params)
         mp.log_model(model, model_name)
         mlflow.log_metrics({"time": end_time - start_time})
         del model

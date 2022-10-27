@@ -31,6 +31,12 @@ def main(args):
     regression_metric = args.regression_metric
     classification_metric = args.classification_metric
 
+    params = {
+        "epochs": epochs,
+        "loss_type": loss_type,
+        "task_code": args.enabled_task_code,
+    }
+
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
     loss_fn = MultiTaskLoss(loss_type=loss_type, task_num=3, enabled_task=enabled_task)
     mtl_metric = MTLMetrics(enabled_task=enabled_task, regression_metric=regression_metric, classification_metric=classification_metric)
