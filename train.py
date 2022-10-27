@@ -52,6 +52,7 @@ def main(args):
         mtl_metric=mtl_metric,
         device=device,
         model_dir=model_dir,
+        params=params,
         experiment_name=experiment_name,
         epochs=epochs,
     )
