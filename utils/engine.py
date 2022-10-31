@@ -92,9 +92,9 @@ def get_str_log(epoch: int, train_metrics: Dict, val_metrics: Dict) -> str:
     train_log = f"Epoch: {epoch:3} "
     val_log = f"Epoch: {epoch:3} "
     for metric, value in train_metrics:
-        train_log += f"| {metric}: {value}"
+        train_log += f"| {metric}: {value:.3f}"
     for metric, value in val_metrics:
-        val_log += f"| {metric}: {value}"
+        val_log += f"| {metric}: {value:.3f}"
     return f"""
     {train_log}
     {val_log}
